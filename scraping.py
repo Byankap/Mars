@@ -1,4 +1,3 @@
-
 # Import Splinter, BeautifulSoup, and Pandas
 from splinter import Browser
 from bs4 import BeautifulSoup as soup
@@ -11,21 +10,17 @@ def scrape_all():
     # Initiate headless driver for deployment
     executable_path = {'executable_path': ChromeDriverManager().install()}
     browser = Browser('chrome', **executable_path, headless=True)
-
+    
     news_title, news_paragraph = mars_news(browser)
-
+    
     # Run all scraping functions and store results in a dictionary
     data = {
         "news_title": news_title,
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
-        "last_modified": dt.datetime.now()
-    }
-
-    data_hemispheres = {
-        "img_url": img_url,
-        "title": img_title
+        "last_modified": dt.datetime.now(),
+        "hemispheres": hemisphere()
     }
 
     # Stop webdriver and return data
@@ -104,49 +99,44 @@ def mars_facts():
     return df.to_html(classes="table table-striped")
 
 
-
-def hemisphere(browser):
+def hemisphere():
+    executable_path = {'executable_path': ChromeDriverManager().install()}
+    browser = Browser('chrome', **executable_path, headless=True)
+    # 1. Use browser to visit the URL 
     url = 'https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars'
-
-browser.visit(url)
-
-# Parse the HTML
-html = browser.html
-html_soup = soup(html, 'html.parser')
-
-# 2. Create a list to hold the images and titles.
-hemisphere_image_urls = []
+    browser.visit(url)
+    # Parse the HTML
+    html = browser.html
+    html_soup = soup(html, 'html.parser')
+    # 2. Create a list to hold the images and titles.
+    hemisphere_image_urls = []
 
 #find the number of pictures to scan
-pics_count = len(html_soup.select("div.item"))
+    pics_count = len(html_soup.select("div.item"))
 
 # 3. Write code to retrieve the image urls and titles for each hemisphere.
 #for loop over the link of each picture
-for image in range(pics_count):
-    hemispheres = {}
-#     a) click on each hemisphere link, 
-    link_image = html_soup.select('div.description a')[image].get('href')
-    browser.visit(f'https://astrogeology.usgs.gov{link_image}')
-    #Parse the new html page with soup
-    html = browser.html
-    sample_image_soup = soup(html, 'html.parser')
-    #get the full image link
-    img_url = sample_image_soup.select_one('div.downloads ul li a').get('href')
-    #get image title
-    img_title = sample_image_soup.select_one('h2.title').get_text()
-    hemispheres = {
-        'img_url': img_url,
-        'title': img_title}
-    #append results dict to hemisphere image urls list
-    hemisphere_image_urls.append(hemispheres)
-    #return to main page
-    browser.back()
-
-# 4. Print the list that holds the dictionary of each image url and title.
-hemisphere_image_urls
-
-# 5. Quit the browser
-browser.quit()
+    for image in range(pics_count):
+        hemispheres = {}
+    #     a) click on each hemisphere link, 
+        link_image = html_soup.select('div.description a')[image].get('href')
+        browser.visit(f'https://astrogeology.usgs.gov{link_image}')
+        #Parse the new html page with soup
+        html = browser.html
+        sample_image_soup = soup(html, 'html.parser')
+        #get the full image link
+        img_url = sample_image_soup.select_one('div.downloads ul li a').get('href')
+        #get image title
+        img_title = sample_image_soup.select_one('h2.title').get_text()
+        hemispheres = {
+            'img_url': img_url,
+            'title': img_title}
+        #append results dict to hemisphere image urls list
+        hemisphere_image_urls.append(hemispheres)
+        # 5. Quit the browser
+        browser.quit()
+        print(hemisphere_image_urls)
+    return hemisphere_image_urls
 
 if __name__ == "__main__":
 
